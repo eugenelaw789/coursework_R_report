@@ -1,0 +1,124 @@
+---
+title: "Untitled"
+autor: Law Weng Chun, Eugene
+date: '2022-03-16'
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(root.dir = 'C:/Users/casey/OneDrive/SIM Year 2 subjects/Programming in DS/coursework files', echo = FALSE)
+```
+
+## Question 1: When is the best time of day, day of the week, and time of year to fly to minimise delays?
+
+First we need to subset the raw data from both the 2005 data and the 2006 data into 2 seperate tables by omitting the 'NA' values using **na.omit()**. We name it "data2005" and "data2006" respectively.
+
+Use the **min()** function to retrieve minimum value for arrival delay for 2005 data, departure delay for 2006 data, arrival delay for 2006 data and departure delay for 2006 data respectively . since we want to retrieve information from specific columns, we use the \$ after the table name.
+
+Make 2 other subsets of data by sub setting the values where ArrDelay= min value or DepDelay= min value. Then, merge the two tables into one by using merge() function. Since we only need data from columns 1 to 8, 15 and 16, we can further subset it into a final table.
+
+```{r ,echo=FALSE}
+
+setwd("C:/Users/casey/OneDrive/SIM Year 2 subjects/Programming in DS/coursework files")
+getwd()
+
+#omit "NA" values 
+read.csv("2005.csv.bz2",header=TRUE,sep = ',')
+data2005 <-na.omit(read.csv("2005.csv.bz2",header=TRUE,sep = ','))
+read.csv("2006.csv.bz2",header=TRUE,sep = ',')
+data2006 <-na.omit(read.csv("2006.csv.bz2",header=TRUE,sep = ',')) 
+
+#Find out the minimum value for arrival delay and departure delay
+#Term after $ is the specific column of interest
+c(min(data2005$ArrDelay),min(data2005$DepDelay),min(data2006$ArrDelay),min(data2006$DepDelay))
+
+#Search for rows within the tables that contains required values
+#values within [] are the conditions
+#Term after $ is the specific column of interest
+best_time_2005 <-data2005[data2005$ArrDelay == -939 | data2005$DepDelay == -1199, ]  
+best_time_2006 <-data2006[data2006$ArrDelay == -592 | data2006$DepDelay == -1200, ]
+
+#merge the tables that shows required data and sieve out only columns 1 to 8, 15 and 16 to make one final table
+best_fly_time <-merge(best_time_2005,best_time_2006, all = TRUE)[ ,c(1:8, 15,16)]
+best_fly_time
+```
+
+> **Answer: Judging from this table, the values suggest that best time of year to fly is April, in which there is minimum arrival delay and also minimal departure delay, best time of day is in the morning (0400-0700), best day of week is Friday where the delays for arrival and departure are minimal.**
+
+## Question 2: Do older planes suffer more delays?
+
+First, we need to import plane data which is in the format of ".csv", so make a table called "plane_data" by using read.csv function.
+
+```{r , echo=FALSE}
+plane_data <- read.csv("plane-data.csv")
+```
+
+Reading the table shows a problem, there are no values for the first 34 rows and so we need to make another table excluding these 34 row
+
+```{r , echo=FALSE}
+plane_data[ -c(1:34), ]
+plane_data2 <- plane_data[ -c(1:34), ]
+```
+
+We then sieve out the first 6 rows of entries,whereby the column 'year' is '2002' and '2004' which indicates planes first commissioned in 2002 and 2004 respectively, by using the head() function.
+
+```{r , echo=FALSE}
+head(plane_data2[plane_data$year == '2002', ])
+head(plane_data2[plane_data$year == '2004', ])
+```
+
+From these tables, we are going to just use two planes of tail numbers "N10575" (2002) and "N12157" (2004) to cross reference with the 2005 data and the 2006 data from the previous question, "data2005" and "data2006" respectively.Here we do a head() again to get the first 6 entries from "data2005" and "data2006" whereby the condition is that tail number is 'N10575" and "N12157".Afterwards, do a summary of these data using the summary() function. The summaries shows the mean arrival and departure delays for both planes in 2005 and 2006.
+
+```{r summary, , echo=TRUE}
+summary(data2005[data2005$TailNum == 'N10575', ])
+summary(data2005[data2005$TailNum == 'N12157', ])
+summary(data2006[data2006$TailNum == 'N10575', ])
+summary(data2006[data2006$TailNum == 'N12157', ])
+```
+
+> **Answer: As can be seen from the summaries, the mean arrival and departure delays in 2005 for the older plane "N10575" are 9.052 and 7.272 respectively and for the newer plane "N12157", -2.000 and -3.000 respectively. That in 2006 for "N10575" are 11.48 and 10.19 respectively and for "N12157", 9.525 and 9.486 respectively. Hence, these suggests that older planes might result in more delays.**
+
+## Question 3: How does the number of people flying between different locations change over time?
+
+First, we activate 'dplyr' function
+
+Then we group the data according to the column "Month" and summarise the number of entries falling under each value under "Month". Since each entry signifies one flight, by getting the number of entries, we can get the number of flights every month for the years 2005 and 2006. the number of flights is correlated to the number of passengers, more flights mean more passengers.
+
+Afterwards, make a (12X3) matrix ,with the matrix() fucntion, with all the values needed and then name the matrix
+
+Now, plot scattered plot graphs using plot() stating clearly the x-axis and y-axis values. Export the plots as images.
+
+```{r, echo=FALSE}
+data2005 %>%
++ group_by(Month) %>%
++ summarise(n = n()) 
+
+data2006 %>%
++ group_by(Month) %>%
++ summarise( n = n())
+
+number_of_flights <- matrix(c(1,2,3,4,5,6,7,8,9,10,11,12, 568031,534959,606489,586179,608046,597856,612107,615643,561905,581513,559625,560485, 570130,518645,596578,577718,594626,586418,608631,617379,573750,599086,575570,585271), nrow = 12, ncol = 3, byrow = FALSE, dimnames = list( c("1","2","3","4","5","6","7","8","9","10","11","12") , c("Month","n2005","n2006")))
+
+plot(number_of_flights[,1], number_of_flights[,2])
+
+plot(number_of_flights[,1], number_of_flights[,3])
+```
+
+we get the images of the plots as shown below:
+
+![nflight2005](nflights2005.png) ![nflight2006](nflights2006.png)
+
+> **Answer: Judging from the 2 graphs, they suggest that number of people flying increases generally from January to August, peaking in August, before falling back down from August to December. There is a sharp drop of people flying from January to February.**
+
+## Question 4: Can you detect cascading failures as delays in one airport create delays in others?
+
+install.packages("igraph")
+library(igraph)
+
+data1 <- data2005[c(data2005$DayofMonth == '5' & data2005$Month == '8' & data2005$TailNum=='N449SW'), ]
+data2 <- data2006[c(data2006$DayofMonth == '5' & data2006$Month == '8' & data2006$TailNum=='N449SW'), ]
+network <- graph(edges = c("HLN", "SLC","SLC","MSP","MSP", "SLC", "SLC","SFO", "SFO","SLC", "SLC", "GTF"), directed = TRUE)
+plot(network)
+network2 <- graph(edges = c("TUS", "SLC","SLC","ABQ","ABQ", "SLC", "SLC","GJT", "GJT","SLC", "SLC", "BIL","BIL","SLC","SLC","ONT"), directed = TRUE)
+plot(network2)
+
